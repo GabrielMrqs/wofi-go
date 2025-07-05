@@ -15,10 +15,8 @@ func check(err error) {
 }
 
 func InitUI(apps map[string]string) {
-	// Inicializa GTK
 	gtk.Init(nil)
 
-	// Cria janela principal
 	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
 	check(err)
 	win.SetTitle("Launcher")
@@ -27,7 +25,6 @@ func InitUI(apps map[string]string) {
 		gtk.MainQuit()
 	})
 
-	// Modelo de lista
 	listStore, err := gtk.ListStoreNew(glib.TYPE_STRING)
 	check(err)
 
@@ -39,39 +36,34 @@ func InitUI(apps map[string]string) {
 	treeView, err := gtk.TreeViewNewWithModel(listStore)
 	check(err)
 
-	// Coluna de texto
 	renderer, err := gtk.CellRendererTextNew()
 	check(err)
-	column, err := gtk.TreeViewColumnNewWithAttribute("Aplicativo", renderer, "text", 0)
+	column, err := gtk.TreeViewColumnNewWithAttribute("App", renderer, "text", 0)
 	check(err)
 	treeView.AppendColumn(column)
 
-	// Clique na linha
 	treeView.Connect("row-activated", func(tv *gtk.TreeView, path *gtk.TreePath, col *gtk.TreeViewColumn) {
 		iter, _ := listStore.GetIter(path)
 		val, _ := listStore.GetValue(iter, 0)
 		appName, _ := val.GetString()
 		cmd := apps[appName]
-		fmt.Println("Executando:", cmd)
+		fmt.Println("Executing:", cmd)
 
-		// Executa o comando via shell
 		go func() {
 			_ = glib.IdleAdd(func() bool {
 				err := exec.Command("sh", "-c", cmd).Start()
 				if err != nil {
-					fmt.Println("Erro ao executar:", err)
+					fmt.Println("Error during execution:", err)
 				}
 				return false
 			})
 		}()
 	})
 
-	// Scrolled window
 	scroll, _ := gtk.ScrolledWindowNew(nil, nil)
 	scroll.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 	scroll.Add(treeView)
 
-	// Adiciona ao container
 	win.Add(scroll)
 	win.ShowAll()
 
